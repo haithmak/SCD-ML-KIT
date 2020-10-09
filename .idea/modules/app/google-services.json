@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "1098131371553",
+    "firebase_url": "https://scd-ml-kit.firebaseio.com",
+    "project_id": "scd-ml-kit",
+    "storage_bucket": "scd-ml-kit.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1098131371553:android:d7dd5ab4227bf00246d560",
+        "android_client_info": {
+          "package_name": "coding.academy.scd_ml_kit"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1098131371553-gbgcjcn1o80dsuk65gdc6ofenpspmv07.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "coding.academy.scd_ml_kit",
+            "certificate_hash": "0dad928e1be9ed80359155d471a90ea79b2ecc75"
+          }
+        },
+        {
+          "client_id": "1098131371553-9u2fe0o895r3dn6flpjh7cemv2c164ic.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAKeNC8n8_XlUEN_M0nVDWkIxE3iuiLIF8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1098131371553-9u2fe0o895r3dn6flpjh7cemv2c164ic.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
