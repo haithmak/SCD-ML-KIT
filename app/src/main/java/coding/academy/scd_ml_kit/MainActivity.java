@@ -4,6 +4,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
+import androidx.core.content.FileProvider;
 
 import android.Manifest;
 import android.content.Context;
@@ -32,6 +33,7 @@ import com.google.firebase.ml.vision.text.FirebaseVisionTextRecognizer;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 
 public class MainActivity extends AppCompatActivity {
     ImageView imageView;
@@ -83,32 +85,7 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View view) {
 
                 checkPermission(REQUEST_TAKE_PHOTO , true);
-                /*
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M){
-                    if (checkSelfPermission(Manifest.permission.CAMERA) ==
-                            PackageManager.PERMISSION_DENIED ||
-                            checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) ==
-                                    PackageManager.PERMISSION_DENIED){
-                        //permission not enabled, request it
-                        String[] permission = {Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE};
-                        //show popup to request permissions
-                        requestPermissions(permission, PERMISSION_CODE);
-                    }
-                    else {
-                        //permission already granted
-                        openCamera();
-                    }
-                }
-
-
-                else {
-                    //system os < marshmallow
-                    openCamera();
-                }
-
-                 */
-
-            }
+                      }
         });
     }
 
@@ -128,7 +105,7 @@ public class MainActivity extends AppCompatActivity {
                         //permission not enabled, request it
                         ActivityCompat.requestPermissions(this, new String[] {Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE},requestCode );
                     }
-                    if (open) {
+                   else if (open) {
                         //permission already granted
                         openCamera();
                     }
@@ -154,17 +131,6 @@ public class MainActivity extends AppCompatActivity {
                         ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, requestCode);
                     }
                 }
-                /*
-                int hasWriteExternalStoragePermission = ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE);
-                //If we have access to external storage...//
-                if (hasWriteExternalStoragePermission == PackageManager.PERMISSION_GRANTED) {
-                    //...call selectPicture, which launches an Activity where the user can select an image//
-
-                    //If permission hasn’t been granted, then...//
-                } else {
-                    //...request the permission//
-                    ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, requestCode);
-                } */
                 break;
 
 
@@ -184,6 +150,7 @@ public class MainActivity extends AppCompatActivity {
                 if (ActivityCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
                     return;
                 }
+
                 // openCamera();
 
             } catch (Exception e) {
@@ -199,17 +166,56 @@ public class MainActivity extends AppCompatActivity {
 
 
     public void openCamera() {
+        photoFile = PicUtil.createTempFile(photoFile);
+        Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        // Ensure that there's a camera activity to handle the intent
+        if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
+
+            try {
+
+            } catch (Exception ex) {
+                // Error occurred while creating the File
+                Log.e("Main" , ex.toString()) ;
+
+            }
+
+            if (photoFile != null) {
+
+              /*  imageUri = Uri.fromFile(image);
+
+                Uri photoURI = FileProvider.getUriForFile(this,
+                        "com.example.android.fileprovider",
+                        photoFile);
+
+
+*/
+                Uri photoURI = FileProvider.getUriForFile(this,
+                        "coding.academy.scd_ml_kit.fileprovider",
+                        photoFile);
+
+              //  Uri photoURI =  Uri.fromFile(photoFile);
+                Log.e("Main" , photoURI.getPath()) ;
+                takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI);
+                takePictureIntent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION
+                        | Intent.FLAG_GRANT_WRITE_URI_PERMISSION) ;
+                startActivityForResult(takePictureIntent, REQUEST_TAKE_PHOTO);
+            }
+
+
+        }
+
         //open the camera => create an Intent object
-        Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-        startActivityForResult(intent, REQUEST_TAKE_PHOTO);
+
+      //  intent.setDataAndType(MediaStore.Images.Media.EXTERNAL_CONTENT_URI , "image/*" );
+     //   startActivityForResult(takePictureIntent, REQUEST_TAKE_PHOTO);
     }
 
-    public File photo;
+    public File photoFile;
 
     private void selectPicture() {
-        photo = PicUtil.createTempFile(photo);
-        Intent intent = new Intent(Intent.ACTION_GET_CONTENT, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-        intent.setType( "image/*" );
+        photoFile = PicUtil.createTempFile(photoFile);
+        Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+        intent.setDataAndType(MediaStore.Images.Media.EXTERNAL_CONTENT_URI , "image/*" );
         startActivityForResult(intent, REQUEST_PHOTO_GALLERY);
     }
 
@@ -220,17 +226,38 @@ public class MainActivity extends AppCompatActivity {
 
         try {
 
-            //set image in imageview
-
-            if (requestCode == REQUEST_TAKE_PHOTO && resultCode == RESULT_OK ) {
+           if (requestCode == REQUEST_TAKE_PHOTO && resultCode == RESULT_OK ) {
+              /*
                 Bundle bundle = data.getExtras();
                 //from bundle, extract the image
                 Bitmap bitmap = (Bitmap) bundle.get("data");
 
-                if(bitmap !=null) {
-                    imageView.setImageBitmap(bitmap);
+                   imageView.setImageBitmap(myBitmap);
                     imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
-                    FbVisionTextRecognizer(bitmap);
+                    FbVisionTextRecognizer(myBitmap);
+
+               */
+
+               // Uri imageUri = (Uri) data.getData();
+             //  Uri imageUri = Uri.fromFile(photoFile);
+
+               Uri imageUri = FileProvider.getUriForFile(this,
+                       "coding.academy.scd_ml_kit.fileprovider",
+                       photoFile);
+
+               Log.e("imageUri =" , imageUri.getPath()) ;
+
+               Intent mediaScanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
+               mediaScanIntent.setData(imageUri);
+               this.sendBroadcast(mediaScanIntent);
+
+
+               Bitmap myBitmap = PicUtil.resizePhoto(photoFile, this, imageUri, imageView);
+
+                if(myBitmap !=null) {
+                    imageView.setImageBitmap(myBitmap);
+                    imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+                    FbVisionTextRecognizer(myBitmap);
                 }
 
             }
@@ -251,30 +278,30 @@ public class MainActivity extends AppCompatActivity {
                     imageView.setImageBitmap(myBitmap);
                 }
  */
-               Intent mediaScanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
+                Intent mediaScanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
                 mediaScanIntent.setData(imageUri);
                 this.sendBroadcast(mediaScanIntent);
 
                 String path = PicUtil.getPath(this, imageUri);
+
                 Bitmap myBitmap ;
                 if (path == null) {
-                    myBitmap = PicUtil.resizePhoto(photo, this, imageUri, imageView);
+                    myBitmap = PicUtil.resizePhoto(photoFile, this, imageUri, imageView);
                 } else {
-                    myBitmap = PicUtil.resizePhoto(photo, path, imageView);
+                    myBitmap = PicUtil.resizePhoto(photoFile, path, imageView);
                 }
                 if (myBitmap != null) {
                    // textView.setText(null);
                     //imageView.setImageBitmap(myBitmap);
+                    imageView.setImageBitmap(myBitmap);
+                    imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+                    FbVisionTextRecognizer(myBitmap) ;
                 }
 
                // Bitmap bitmap2 = decodeBitmapUri( this, imageUri , imageView );
-                imageView.setImageBitmap(myBitmap);
-                imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
 
 
 
-
-                FbVisionTextRecognizer(myBitmap) ;
 
 
             }
@@ -344,26 +371,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private Bitmap decodeBitmapUri(Context ctx, Uri uri , ImageView imageview) throws FileNotFoundException
-    {
-        // int targetW = 600;
-        // int targetH = 600;
-        // Get the dimensions of the View
-        int targetW = imageview.getWidth()  ;
-        int targetH = imageview.getHeight()  ;
 
-        BitmapFactory.Options bmOptions = new BitmapFactory.Options();
-        bmOptions.inJustDecodeBounds = true;
-        BitmapFactory.decodeStream(ctx.getContentResolver().openInputStream(uri), null, bmOptions);
-        int photoW = bmOptions.outWidth;
-        int photoH = bmOptions.outHeight;
-
-        int scaleFactor = Math.min(photoW / targetW, photoH / targetH);
-        bmOptions.inJustDecodeBounds = false;
-        bmOptions.inSampleSize = scaleFactor;
-        bmOptions.inPurgeable = true;
-        return BitmapFactory.decodeStream(ctx.getContentResolver().openInputStream(uri), null, bmOptions);
-    }
 
 
 
