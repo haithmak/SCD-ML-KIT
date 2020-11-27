@@ -1,17 +1,11 @@
 package coding.academy.scd_ml_kit;
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.FileProvider;
-
 import android.Manifest;
-import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
+import android.graphics.Point;
+import android.graphics.Rect;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -19,26 +13,42 @@ import android.provider.MediaStore;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.FileProvider;
+
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.ml.vision.FirebaseVision;
 import com.google.firebase.ml.vision.common.FirebaseVisionImage;
 import com.google.firebase.ml.vision.text.FirebaseVisionText;
 import com.google.firebase.ml.vision.text.FirebaseVisionTextRecognizer;
 
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class MainActivity extends AppCompatActivity {
+
+    private static final String TAG = "MainActivity";
+
+
     ImageView imageView;
     TextView textView;
-    Button mCamera , mGallary ;
+    Button mCamera, mGallary;
 
 
     private static final int requestPermissionID = 101;
@@ -55,8 +65,8 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         imageView = findViewById(R.id.imageId);
-        mCamera= findViewById(R.id.camera);
-        mGallary= findViewById(R.id.Gallery);
+        mCamera = findViewById(R.id.camera);
+        mGallary = findViewById(R.id.Gallery);
         //find textview
         textView = findViewById(R.id.textId);
 
@@ -65,17 +75,15 @@ public class MainActivity extends AppCompatActivity {
             //grant the permission
             requestPermissions(new String[]{Manifest.permission.CAMERA}, 101);
         }
-
          */
 
-        checkPermission(REQUEST_TAKE_PHOTO , false);
-
+        checkPermission(REQUEST_TAKE_PHOTO, false);
 
 
         mGallary.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                checkPermission(REQUEST_PHOTO_GALLERY , true);
+                checkPermission(REQUEST_PHOTO_GALLERY, true);
             }
         });
 
@@ -83,34 +91,32 @@ public class MainActivity extends AppCompatActivity {
         mCamera.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-
-                checkPermission(REQUEST_TAKE_PHOTO , true);
-                      }
+                checkPermission(REQUEST_TAKE_PHOTO, true);
+            }
         });
-    }
 
+
+    }
 
 
     //Check whether the user has granted the WRITE_STORAGE permission//
 
-    public void checkPermission(int requestCode , boolean open) {
+    public void checkPermission(int requestCode, boolean open) {
         switch (requestCode) {
 
-            case REQUEST_TAKE_PHOTO :
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M){
+            case REQUEST_TAKE_PHOTO:
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                     if (checkSelfPermission(Manifest.permission.CAMERA) ==
                             PackageManager.PERMISSION_DENIED ||
                             checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) ==
-                                    PackageManager.PERMISSION_DENIED){
+                                    PackageManager.PERMISSION_DENIED) {
                         //permission not enabled, request it
-                        ActivityCompat.requestPermissions(this, new String[] {Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE},requestCode );
-                    }
-                   else if (open) {
+                        ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE}, requestCode);
+                    } else if (open) {
                         //permission already granted
                         openCamera();
                     }
-                }
-                else {
+                } else {
                     if (open) {
                         //permission already granted
                         openCamera();
@@ -120,14 +126,12 @@ public class MainActivity extends AppCompatActivity {
                 break;
 
 
-            case REQUEST_PHOTO_GALLERY :
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M){
+            case REQUEST_PHOTO_GALLERY:
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                     if (checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) ==
-                                    PackageManager.PERMISSION_GRANTED){
+                            PackageManager.PERMISSION_GRANTED) {
                         selectPicture();
-                    }
-                    else {
-
+                    } else {
                         ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, requestCode);
                     }
                 }
@@ -159,9 +163,6 @@ public class MainActivity extends AppCompatActivity {
         }
 
 
-
-
-
     }
 
 
@@ -175,7 +176,7 @@ public class MainActivity extends AppCompatActivity {
 
             } catch (Exception ex) {
                 // Error occurred while creating the File
-                Log.e("Main" , ex.toString()) ;
+                Log.e("Main", ex.toString());
 
             }
 
@@ -193,11 +194,11 @@ public class MainActivity extends AppCompatActivity {
                         "coding.academy.scd_ml_kit.fileprovider",
                         photoFile);
 
-              //  Uri photoURI =  Uri.fromFile(photoFile);
-                Log.e("Main" , photoURI.getPath()) ;
+                //  Uri photoURI =  Uri.fromFile(photoFile);
+                Log.e("Main", photoURI.getPath());
                 takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI);
                 takePictureIntent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION
-                        | Intent.FLAG_GRANT_WRITE_URI_PERMISSION) ;
+                        | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
                 startActivityForResult(takePictureIntent, REQUEST_TAKE_PHOTO);
             }
 
@@ -206,8 +207,8 @@ public class MainActivity extends AppCompatActivity {
 
         //open the camera => create an Intent object
 
-      //  intent.setDataAndType(MediaStore.Images.Media.EXTERNAL_CONTENT_URI , "image/*" );
-     //   startActivityForResult(takePictureIntent, REQUEST_TAKE_PHOTO);
+        //  intent.setDataAndType(MediaStore.Images.Media.EXTERNAL_CONTENT_URI , "image/*" );
+        //   startActivityForResult(takePictureIntent, REQUEST_TAKE_PHOTO);
     }
 
     public File photoFile;
@@ -215,10 +216,12 @@ public class MainActivity extends AppCompatActivity {
     private void selectPicture() {
         photoFile = PicUtil.createTempFile(photoFile);
         Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
-        intent.setDataAndType(MediaStore.Images.Media.EXTERNAL_CONTENT_URI , "image/*" );
+        intent.setDataAndType(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, "image/*");
         startActivityForResult(intent, REQUEST_PHOTO_GALLERY);
     }
 
+
+    //https://www.androidauthority.com/ml-kit-extracting-text-from-images-google-machine-learning-sdk-911740/
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
@@ -226,7 +229,7 @@ public class MainActivity extends AppCompatActivity {
 
         try {
 
-           if (requestCode == REQUEST_TAKE_PHOTO && resultCode == RESULT_OK ) {
+            if (requestCode == REQUEST_TAKE_PHOTO && resultCode == RESULT_OK) {
               /*
                 Bundle bundle = data.getExtras();
                 //from bundle, extract the image
@@ -238,33 +241,32 @@ public class MainActivity extends AppCompatActivity {
 
                */
 
-               // Uri imageUri = (Uri) data.getData();
-             //  Uri imageUri = Uri.fromFile(photoFile);
+                // Uri imageUri = (Uri) data.getData();
+                //  Uri imageUri = Uri.fromFile(photoFile);
 
-               Uri imageUri = FileProvider.getUriForFile(this,
-                       "coding.academy.scd_ml_kit.fileprovider",
-                       photoFile);
+                Uri imageUri = FileProvider.getUriForFile(this,
+                        "coding.academy.scd_ml_kit.fileprovider",
+                        photoFile);
 
-               Log.e("imageUri =" , imageUri.getPath()) ;
+                Log.e("imageUri =", imageUri.getPath());
 
-               Intent mediaScanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
-               mediaScanIntent.setData(imageUri);
-               this.sendBroadcast(mediaScanIntent);
+                Intent mediaScanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
+                mediaScanIntent.setData(imageUri);
+                this.sendBroadcast(mediaScanIntent);
 
 
-               Bitmap myBitmap = PicUtil.resizePhoto(photoFile, this, imageUri, imageView);
+                Bitmap myBitmap = PicUtil.resizePhoto(photoFile, this, imageUri, imageView);
 
-                if(myBitmap !=null) {
+                if (myBitmap != null) {
                     imageView.setImageBitmap(myBitmap);
                     imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
                     FbVisionTextRecognizer(myBitmap);
                 }
 
-            }
-            else if (requestCode == REQUEST_PHOTO_GALLERY && resultCode == RESULT_OK)
-            {
+            } else if (requestCode == REQUEST_PHOTO_GALLERY && resultCode == RESULT_OK) {
                 Uri imageUri = (Uri) data.getData();
-                Log.e("ocr", "launchMediaScanIntent = " + imageUri.getPath() );
+                Log.e("ocr", "launchMediaScanIntent = " + imageUri.getPath());
+
                  /*
                 String path = PicUtil.getPath(this, imageUri);
                 Bitmap  myBitmap ;
@@ -277,61 +279,52 @@ public class MainActivity extends AppCompatActivity {
                     textView.setText(null);
                     imageView.setImageBitmap(myBitmap);
                 }
- */
+                */
+
                 Intent mediaScanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
                 mediaScanIntent.setData(imageUri);
                 this.sendBroadcast(mediaScanIntent);
 
                 String path = PicUtil.getPath(this, imageUri);
 
-                Bitmap myBitmap ;
+                Bitmap myBitmap;
                 if (path == null) {
                     myBitmap = PicUtil.resizePhoto(photoFile, this, imageUri, imageView);
                 } else {
                     myBitmap = PicUtil.resizePhoto(photoFile, path, imageView);
                 }
                 if (myBitmap != null) {
-                   // textView.setText(null);
+                    // textView.setText(null);
                     //imageView.setImageBitmap(myBitmap);
                     imageView.setImageBitmap(myBitmap);
                     imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
-                    FbVisionTextRecognizer(myBitmap) ;
+                    FbVisionTextRecognizer(myBitmap);
                 }
 
-               // Bitmap bitmap2 = decodeBitmapUri( this, imageUri , imageView );
-
-
-
+                // Bitmap bitmap2 = decodeBitmapUri( this, imageUri , imageView );
 
 
             }
 
 
-
-
-
-        } catch (Exception e){
-            Log.e("Main" , e.toString()) ;
+        } catch (Exception e) {
+            Log.e("Main", e.toString());
         }
-
-
 
 
     }
 
 
+    FirebaseVision firebaseVision;
+    FirebaseVisionImage firebaseVisionImage;
+    FirebaseVisionTextRecognizer firebaseVisionTextRecognizer;
 
-
-
-    FirebaseVision firebaseVision ;
-    FirebaseVisionImage firebaseVisionImage ;
-    FirebaseVisionTextRecognizer firebaseVisionTextRecognizer ;
-    private String FbVisionTextRecognizer(Bitmap bitmap){
+    private String FbVisionTextRecognizer(Bitmap bitmap) {
         //process the image
         //1. create a FirebaseVisionImage object from a Bitmap object
-         firebaseVisionImage = FirebaseVisionImage.fromBitmap(bitmap);
+        firebaseVisionImage = FirebaseVisionImage.fromBitmap(bitmap);
         //2. Get an instance of FirebaseVision
-         firebaseVision = FirebaseVision.getInstance();
+        firebaseVision = FirebaseVision.getInstance();
         //3. Create an instance of FirebaseVisionTextRecognizer
         firebaseVisionTextRecognizer = firebaseVision.getOnDeviceTextRecognizer();
         //4. Create a task to process the image
@@ -341,9 +334,9 @@ public class MainActivity extends AppCompatActivity {
         task.addOnSuccessListener(new OnSuccessListener<FirebaseVisionText>() {
             @Override
             public void onSuccess(FirebaseVisionText firebaseVisionText) {
-               // String s = firebaseVisionText.getText();
-                processExtractedText(firebaseVisionText) ;
-              //  textView.setText(s);
+                // String s = firebaseVisionText.getText();
+                processExtractedText(firebaseVisionText);
+                //  textView.setText(s);
             }
         });
         //6. if task is failure
@@ -356,30 +349,281 @@ public class MainActivity extends AppCompatActivity {
         });
 
 
-        return textView.getText().toString() ;
+        return textView.getText().toString();
     }
 
 
     private void processExtractedText(FirebaseVisionText firebaseVisionText) {
         textView.setText(null);
+
         if (firebaseVisionText.getTextBlocks().size() == 0) {
             textView.setText("No_text");
             return;
         }
+
+        StringBuilder finalText = new StringBuilder();
+
         for (FirebaseVisionText.TextBlock block : firebaseVisionText.getTextBlocks()) {
-            textView.append(block.getText());
+            //  textView.append(block.getText() );
+            String blockText = block.getText();
+            Point[] blockCornerPoints = block.getCornerPoints();
+            Rect blockFrame = block.getBoundingBox();
+            for (FirebaseVisionText.Line line : block.getLines()) {
+                String lineText = line.getText();
+
+                textView.append(block.getText());
+                finalText.append(block.getText());
+
+                Point[] lineCornerPoints = line.getCornerPoints();
+
+                Rect lineFrame = line.getBoundingBox();
+
+                for (FirebaseVisionText.Element element : line.getElements()) {
+                    String elementText = element.getText();
+                    Point[] elementCornerPoints = element.getCornerPoints();
+                    Rect elementFrame = element.getBoundingBox();
+                }
+
+
+            }
+
+        }
+
+
+        analyseText(finalText.toString());
+
+    }
+
+
+    // old
+    private void checkError(String text) {
+
+        StringBuilder wordStringBuilder = new StringBuilder();
+
+        List<String> keyWords = new ArrayList<>();
+        List<String> lines = new ArrayList<>();
+
+        short n = 0;
+
+        for (char c : text.toCharArray()) {
+
+            if (c == ' ' && n == 0) {
+
+                keyWords.add(wordStringBuilder.toString());
+                wordStringBuilder = new StringBuilder();
+
+                n += 1;
+            } else if (c == '\n') {
+                n = 0;
+            } else if (n == 0) {
+                wordStringBuilder.append(c);
+            }
+
+        }
+
+        keyWords.add(wordStringBuilder.toString());
+
+
+        for (char c : text.toCharArray()) {
+
+            if (c == '\n') {
+
+                lines.add(wordStringBuilder.toString());
+                wordStringBuilder = new StringBuilder();
+
+
+            } else {
+                wordStringBuilder.append(c);
+            }
+
+        }
+
+        lines.add(wordStringBuilder.toString());
+
+        //Log.d(TAG, "checkError: " + keyWords);
+
+        for (final String word : keyWords) {
+
+
+            FirebaseFirestore.getInstance()
+                    .collection("regex").whereEqualTo("regex_name", word)
+                    .get().addOnSuccessListener(new OnSuccessListener<QuerySnapshot>() {
+                @Override
+                public void onSuccess(QuerySnapshot queryDocumentSnapshots) {
+                    List<String> regex = new ArrayList<>();
+
+                    for (DocumentSnapshot d : queryDocumentSnapshots) {
+
+                        try {
+                            regex = (List<String>) d.get("regex");
+                        } catch (Exception x) {
+
+                        }
+
+                        //Log.d(TAG, "onSuccess: " + d.get("regex"));
+
+                    }
+
+                    for (String s : regex) {
+                        Log.d(TAG, "onSuccess: " + s);
+                    }
+
+                }
+            }).addOnFailureListener(new OnFailureListener() {
+                @Override
+                public void onFailure(@NonNull Exception e) {
+                    Log.d("Exceptions", "onFailure: " + e.getMessage());
+                }
+            });
+
+
+        }
+
+    }
+
+    private String result = "";
+
+    private void analyseText(final String text) {
+
+        result = "";
+
+        StringBuilder wordStringBuilder = new StringBuilder();
+        List<String> lines = new ArrayList<>();
+        String keyWord = "";
+
+        // لترتيب النص كل سطر في ليست
+        for (char c : text.toCharArray()) {
+
+            if (c == '\n') {
+
+                lines.add(wordStringBuilder.toString());
+                wordStringBuilder = new StringBuilder();
+
+
+            } else {
+                wordStringBuilder.append(c);
+            }
+
+        }
+
+        // اضافة اخر سطر
+        lines.add(wordStringBuilder.toString());
+
+
+        // الدوران على السطور لتحليل النص داخلهم
+        for (final String line : lines) {
+            // فحص الكلمة الاولى لمعرفة نوع البيانات
+            if (line.startsWith("if")) {
+                keyWord = "if";
+            } else if (line.startsWith("for")) {
+                keyWord = "for";
+            } else if (line.startsWith("int")) {
+                keyWord = "int";
+            } else if (line.startsWith("switch")) {
+                keyWord = "switch";
+            } else if (line.startsWith("String")) {
+                keyWord = "String";
+            } else if (line.startsWith("return")) {
+                keyWord = "return";
+            } else if (line.startsWith("float")) {
+                keyWord = "float";
+            } else if (line.startsWith("private void") || line.startsWith("public void") || line.startsWith("void")) {
+                keyWord = "function";
+            }
+
+
+            FirebaseFirestore.getInstance()
+                    .collection("regex").whereEqualTo("regex_name", keyWord)
+                    .get().addOnSuccessListener(new OnSuccessListener<QuerySnapshot>() {
+                @Override
+                public void onSuccess(QuerySnapshot queryDocumentSnapshots) {
+
+                    List<String> regex = new ArrayList<>();
+
+                    for (DocumentSnapshot d : queryDocumentSnapshots) {
+
+                        try {
+                            regex = (List<String>) d.get("regex");
+                        } catch (Exception x) {
+                            Log.d(TAG, "Exception : " + x.getMessage());
+                        }
+                        Log.d(TAG, "النوع : " + d.getString("regex_name") + " | " + d.getString("item_name"));
+                        //result += "النوع : " + d.getString("regex_name") + " | " + d.getString("item_name") + "\n";
+
+                    }
+
+                    boolean correct = false;
+
+                    if (regex != null) {
+
+                        Log.d(TAG, "النص : " + line);
+
+                        for (String s : regex) {
+                            Log.d(TAG, "الريجكس: " + s);
+                            //result += "\nالريجكس: -> " + s + "";
+
+                            if (checkErrors(s, line)) {
+                                correct = true;
+                            }
+
+                        }
+
+                        if (correct) {
+                            Log.d(TAG, "النتيجة : صح");
+                            result += line + "\n | النتيجة : صح" + "\n" + "-----------------------------------------------\n";
+
+                        } else {
+                            Log.d(TAG, "النتيجة : خطا");
+                            result += " -> " + line + "\n | النتيجة : خطأ" + "\n" + "-----------------------------------------------\n";
+                        }
+
+                        textView.setText(result);
+
+                    }
+
+
+                }
+            }).addOnFailureListener(new OnFailureListener() {
+                @Override
+                public void onFailure(@NonNull Exception e) {
+                    Log.d(TAG, "onFailure: " + e.getMessage());
+                }
+            });
+        }
+
+    }
+
+
+    private boolean checkErrors(String regex, String text) {
+
+        try {
+
+            Pattern pt = Pattern.compile(regex);
+            Matcher mt = pt.matcher(text);
+
+            return mt.matches();
+        } catch (Exception x) {
+            Log.d(TAG, "خطأ عند معالجة الريجكس: " + x.getMessage());
+            return false;
         }
     }
 
 
-
-
-
-
-
-
-
-
-
+    public void check(View view) {
+        EditText editText = findViewById(R.id.textHere);
+        analyseText(editText.getText().toString());
+    }
 
 }
+
+
+
+
+
+
+
+
+
+
+
+

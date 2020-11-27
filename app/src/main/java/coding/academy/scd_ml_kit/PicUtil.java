@@ -9,8 +9,6 @@ import android.os.Environment;
 import android.provider.MediaStore;
 import android.widget.ImageView;
 
-import androidx.core.content.FileProvider;
-
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -38,12 +36,10 @@ public class PicUtil {
     }
 
 
-
-
     public static File createTempFile(File file) {
-        String imageFileName =  "SCD_" + new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date()) + ".jpg";
+        String imageFileName = "SCD_" + new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date()) + ".jpg";
         //File directory = new File(Environment.getExternalStorageDirectory()
-          //      .getPath() + "/com.jessicathornsby.myapplication");
+        //      .getPath() + "/com.jessicathornsby.myapplication");
         File directory = new File(Environment.getExternalStoragePublicDirectory
                 (Environment.DIRECTORY_DCIM) + "/SCD");
         if (!directory.exists() || !directory.isDirectory()) {
@@ -56,8 +52,6 @@ public class PicUtil {
     }
 
 
-
-
     public static Bitmap resizePhoto(File imageFile, Context context, Uri uri, ImageView view) {
         BitmapFactory.Options newOptions = new BitmapFactory.Options();
         try {
@@ -65,8 +59,8 @@ public class PicUtil {
             int photoHeight = newOptions.outHeight;
             int photoWidth = newOptions.outWidth;
 
-           // newOptions.inSampleSize = Math.min(photoWidth / view.getWidth(), photoHeight / view.getHeight());
-            newOptions.inSampleSize =  Math.max(1, Math.min(photoWidth / view.getWidth(), photoHeight / view.getHeight()));
+            // newOptions.inSampleSize = Math.min(photoWidth / view.getWidth(), photoHeight / view.getHeight());
+            newOptions.inSampleSize = Math.max(1, Math.min(photoWidth / view.getWidth(), photoHeight / view.getHeight()));
             newOptions.inJustDecodeBounds = false;
             newOptions.inPurgeable = true;
             return compressPhoto(imageFile, decodeStream(context.getContentResolver().openInputStream(uri), null, newOptions));
@@ -76,13 +70,12 @@ public class PicUtil {
         }
     }
 
-    public Bitmap decodeBitmapUri(Context ctx, Uri uri ,ImageView imageview) throws FileNotFoundException
-    {
+    public Bitmap decodeBitmapUri(Context ctx, Uri uri, ImageView imageview) throws FileNotFoundException {
         // int targetW = 600;
         // int targetH = 600;
         // Get the dimensions of the View
-        int targetW = imageview.getWidth()  ;
-        int targetH = imageview.getHeight()  ;
+        int targetW = imageview.getWidth();
+        int targetH = imageview.getHeight();
 
         BitmapFactory.Options bmOptions = new BitmapFactory.Options();
         bmOptions.inJustDecodeBounds = true;
@@ -90,7 +83,7 @@ public class PicUtil {
         int photoW = bmOptions.outWidth;
         int photoH = bmOptions.outHeight;
         // Determine how much to scale down the image
-        int scaleFactor = Math.max(1, Math.min(photoW/targetW, photoH/targetH));
+        int scaleFactor = Math.max(1, Math.min(photoW / targetW, photoH / targetH));
         //int scaleFactor = Math.min(photoW / targetW, photoH / targetH);
         bmOptions.inJustDecodeBounds = false;
         bmOptions.inSampleSize = scaleFactor;
@@ -117,16 +110,6 @@ public class PicUtil {
         }
         return bitmap;
     }
-
-
-
-
-
-
-
-
-
-
 
 
 }
