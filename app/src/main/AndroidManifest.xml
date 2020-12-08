@@ -26,6 +26,8 @@
         </activity>
 
 
+
+
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="coding.academy.scd_ml_kit.fileprovider"
