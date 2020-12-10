@@ -29,25 +29,22 @@ public class CodeViewActivity extends AppCompatActivity {
         intent.putExtra(ARG_CODE, code);
         return intent;
     }
-
+        String code;
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.fragment_codeview);
         codeView = (CodeView) findViewById(R.id.code_view);
 
-        if(getIntent().getSerializableExtra(ARG_CODE)!=null) {
-            Code = getIntent().getSerializableExtra(ARG_CODE).toString() ;
-            codeView.setOptions(Options.Default.get(this)
+        if(getIntent().getStringExtra(ARG_CODE)!=null) {
+            code = getIntent().getStringExtra(ARG_CODE);
+            codeView.setOptions(Options.Default.get(getBaseContext())
                     .withLanguage("java")
-                    .withCode(Code)
+                    .withCode(code)
                     .withTheme(ColorTheme.MONOKAI));
         }
 
     }
 
-    @Override
-    public void onBackPressed() {
 
-    }
 }

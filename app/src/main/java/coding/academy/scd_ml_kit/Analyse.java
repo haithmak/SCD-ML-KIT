@@ -90,7 +90,6 @@ public class Analyse {
                 keyWord = "";
             }
 
-            final String finalKeyWord = keyWord;
             firebaseFirestore
                     .collection("regex").whereEqualTo("regex_name", keyWord)
                     .get().addOnSuccessListener(new OnSuccessListener<QuerySnapshot>() {
@@ -122,10 +121,7 @@ public class Analyse {
                         islineCorrect = checkErrors(regexList , line) ;
 
                         if(!islineCorrect){
-
-
                              result +=  "xxx" +line + "xxx"+ "\n" +  getSuggestion(suggestion) +"\n" ;
-                       //     result += line + "\n" ;
                         }else {
                             result += line + "\n";
 

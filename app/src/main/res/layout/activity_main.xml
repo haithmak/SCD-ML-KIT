@@ -5,6 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
+    android:keepScreenOn="true"
     tools:context=".MainActivity">
 
     <androidx.appcompat.widget.Toolbar
@@ -42,66 +43,8 @@
         />
 
 
-    <LinearLayout
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:visibility="gone">
 
 
-        <ImageView
-            android:id="@+id/imageId"
-            android:layout_width="match_parent"
-            android:layout_height="200dp"
-            android:contentDescription="asd"
-            android:scaleType="centerCrop" />
 
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal">
-
-            <Button
-                android:id="@+id/camera"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="camera"
-
-                />
-
-            <Button
-                android:id="@+id/Gallery"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Gallery" />
-        </LinearLayout>
-
-        <ScrollView
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_margin="8dp"
-            android:layout_weight="2"
-            android:layoutDirection="ltr">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layoutDirection="ltr"
-                android:orientation="vertical">
-
-                <TextView
-                    android:id="@+id/textId"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="left"
-                    android:scrollbars="horizontal"
-                    android:textColor="@android:color/black"
-                    android:textSize="10sp" />
-
-            </LinearLayout>
-        </ScrollView>
-
-    </LinearLayout>
 
 </RelativeLayout>

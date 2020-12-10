@@ -62,24 +62,10 @@ public class CameraFragment extends Fragment {
     private Analyse _analyse;
 
     ImageView imageView;
-    TextView textView;
+
     TextView textSuggestion;
-    Button mCamera, mGallary;
+    Button mCamera, mGallary ,mZoom;
 
-    private Callbacks mCallbacks;
-
-      @Override
-    public void onAttach(Context context) {
-        super.onAttach(context);
-        mCallbacks = (Callbacks) context;
-    }
-
-
-    @Override
-    public void onDetach() {
-        super.onDetach();
-        mCallbacks = null;
-    }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -88,7 +74,7 @@ public class CameraFragment extends Fragment {
         return inflater.inflate(R.layout.fragment_camera, container, false);
     }
 
-
+    CodeView codeView ;
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
@@ -96,11 +82,11 @@ public class CameraFragment extends Fragment {
         imageView = view.findViewById(R.id.imageId);
         mCamera = view.findViewById(R.id.camera);
         mGallary = view.findViewById(R.id.Gallery);
-
+        codeView = view.findViewById(R.id.code_view);
 
         //find textview
-        textView = view.findViewById(R.id.textId);
-        textSuggestion = view.findViewById(R.id.textSuggestion);
+     //   textView = view.findViewById(R.id.textId);
+       // textSuggestion = view.findViewById(R.id.textSuggestion);
         _analyse = new Analyse(getContext());
 
 
@@ -122,6 +108,14 @@ public class CameraFragment extends Fragment {
             }
         });
 
+        mZoom= view.findViewById(R.id.zoom_button);
+        mZoom.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+               // Intent intent = CodeViewActivity.newIntent(getActivity() , codeView.) ;
+               // startActivity(intent);
+            }
+        });
     }
 
     //Check whether the user has granted the WRITE_STORAGE permission//
@@ -307,7 +301,7 @@ public class CameraFragment extends Fragment {
     FirebaseVisionImage firebaseVisionImage;
     FirebaseVisionTextRecognizer firebaseVisionTextRecognizer;
 
-    private String FbVisionTextRecognizer(Bitmap bitmap) {
+    private void FbVisionTextRecognizer(Bitmap bitmap) {
         //process the image
         //1. create a FirebaseVisionImage object from a Bitmap object
         firebaseVisionImage = FirebaseVisionImage.fromBitmap(bitmap);
@@ -338,16 +332,14 @@ public class CameraFragment extends Fragment {
         });
 
 
-        return textView.getText().toString();
     }
 
 
     private void processExtractedText(FirebaseVisionText firebaseVisionText) {
-        textView.setText(null);
-        StringBuilder textToAnalyse = new StringBuilder();
+
         String lineText ="";
         if (firebaseVisionText.getTextBlocks().size() == 0) {
-            textView.setText("No_text");
+
             return;
         }
 
@@ -365,18 +357,27 @@ public class CameraFragment extends Fragment {
 
         }
 
-        textView.setText(lineText);
 
-      //_analyse.analyseNormalText(lineText, textView, textSuggestion);
-
-     _analyse.analysCode(lineText).observe(this, new Observer<String>() {
+        _analyse.analysCode(lineText).observe(this, new Observer<String>() {
             @Override
             public void onChanged(String s) {
-                Intent intent = CodeViewActivity.newIntent(getActivity() , s) ;
+
+                codeView.setOptions(Options.Default.get(getContext())
+                        .withLanguage("java")
+                        .withCode(s)
+                        .withTheme(ColorTheme.MONOKAI));
+
+                mZoom.setVisibility(View.VISIBLE);
+
+
+
+               /* Intent intent = CodeViewActivity.newIntent(getActivity() , s) ;
                 Bundle bundle = new Bundle();
                 bundle.putString(ARG_CODE , s );
                 intent.putExtras(bundle) ;
                 startActivity(intent);
+
+                */
             }
 
 
