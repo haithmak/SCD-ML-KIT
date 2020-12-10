@@ -26,12 +26,7 @@ public class CodeViewActivity extends AppCompatActivity {
     public static Intent newIntent(Context packageContext, String code) {
 
         Intent intent = new Intent(packageContext, CodeViewActivity.class);
-
-        Bundle bundle = new Bundle() ;
-        //  intent.putExtra(EXTRA_SURH_PAGE_TYPE, pagetype);
         intent.putExtra(ARG_CODE, code);
-
-
         return intent;
     }
 
@@ -53,6 +48,6 @@ public class CodeViewActivity extends AppCompatActivity {
 
     @Override
     public void onBackPressed() {
-        super.onBackPressed();
+
     }
 }

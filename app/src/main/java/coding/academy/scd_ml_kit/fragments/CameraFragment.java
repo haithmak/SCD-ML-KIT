@@ -25,6 +25,7 @@ import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.FileProvider;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.Observer;
 
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -38,6 +39,7 @@ import java.io.File;
 
 import coding.academy.scd_ml_kit.Analyse;
 import coding.academy.scd_ml_kit.Callbacks;
+import coding.academy.scd_ml_kit.CodeViewActivity;
 import coding.academy.scd_ml_kit.PicUtil;
 import coding.academy.scd_ml_kit.R;
 import io.github.kbiakov.codeview.CodeView;
@@ -299,7 +301,7 @@ public class CameraFragment extends Fragment {
 
 
     }
-
+    private static final String ARG_CODE = "CODE";
 
     FirebaseVision firebaseVision;
     FirebaseVisionImage firebaseVisionImage;
@@ -365,7 +367,22 @@ public class CameraFragment extends Fragment {
 
         textView.setText(lineText);
 
-     _analyse.analyseNormalText(lineText, textView, textSuggestion);
+      //_analyse.analyseNormalText(lineText, textView, textSuggestion);
+
+     _analyse.analysCode(lineText).observe(this, new Observer<String>() {
+            @Override
+            public void onChanged(String s) {
+                Intent intent = CodeViewActivity.newIntent(getActivity() , s) ;
+                Bundle bundle = new Bundle();
+                bundle.putString(ARG_CODE , s );
+                intent.putExtras(bundle) ;
+                startActivity(intent);
+            }
+
+
+        }
+
+        );
 
 
 

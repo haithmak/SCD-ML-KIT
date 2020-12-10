@@ -7,6 +7,7 @@ import android.util.Log;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.lifecycle.MutableLiveData;
 
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -55,21 +56,122 @@ public class Analyse {
     }
 
     private static final String ARG_CODE = "CODE";
+   FirebaseFirestore firebaseFirestore = FirebaseFirestore.getInstance() ;
+
+   MutableLiveData<String> CodeLiveData = new MutableLiveData<>();
+
+
+    public MutableLiveData<String> analysCode(final String code) {
+        String keyWord = "";
+        final List<String> lines = convertArrayToList(code.split("\n"));
+        for (int i = 0; i < lines.size(); i++) {
+            final String line = lines.get(i);
+            Log.e("camera", "line = " + line);
+            // فحص الكلمة الاولى لمعرفة نوع البيانات
+            if (line.startsWith("if")) {
+                keyWord = "if";
+            } else if (line.startsWith("for")) {
+                keyWord = "for";
+            } else if (line.startsWith("int")) {
+                keyWord = "int";
+            } else if (line.startsWith("switch")) {
+                keyWord = "switch";
+            } else if (line.startsWith("String")) {
+                keyWord = "String";
+            } else if (line.startsWith("return")) {
+                keyWord = "return";
+            } else if (line.startsWith("float")) {
+                keyWord = "float";
+            } else if (line.startsWith("double")) {
+                keyWord = "double";
+            } else if (line.startsWith("private void") || line.startsWith("public void") || line.startsWith("public static void") || line.startsWith("private static void") || line.startsWith("void")) {
+                keyWord = "function";
+            } else {
+                keyWord = "";
+            }
+
+            final String finalKeyWord = keyWord;
+            firebaseFirestore
+                    .collection("regex").whereEqualTo("regex_name", keyWord)
+                    .get().addOnSuccessListener(new OnSuccessListener<QuerySnapshot>() {
+                @Override
+                public void onSuccess(QuerySnapshot queryDocumentSnapshots) {
+
+                    List<String> regexList = new ArrayList<>();
+                    boolean islineCorrect = false ;
+                    List<String> suggestion = new ArrayList<>();
+
+                    for (DocumentSnapshot d : queryDocumentSnapshots) {
+
+                        try {
+                            regexList = (List<String>) d.get("regex");
+
+                            if (d.get("suggestion") != null) {
+                                suggestion = (List<String>) d.get("suggestion");
+                            }
+
+                        } catch (Exception x) {
+                            Log.d(TAG, "Exception : " + x.getMessage());
+                        }
+                        Log.d(TAG, "النوع : " + d.getString("regex_name") + " | " + d.getString("item_name"));
+
+                    }
+
+                    if (regexList != null || !regexList.isEmpty()  ) {
+
+                        islineCorrect = checkErrors(regexList , line) ;
+
+                        if(!islineCorrect){
+
+
+                             result +=  "xxx" +line + "xxx"+ "\n" +  getSuggestion(suggestion) +"\n" ;
+                       //     result += line + "\n" ;
+                        }else {
+                            result += line + "\n";
+
+                        }
+
+                             CodeLiveData.setValue(result);
+
+                    }
+
+                }
+            }).addOnFailureListener(new OnFailureListener() {
+                @Override
+                public void onFailure(@NonNull Exception e) {
+                    Log.d(TAG, "onFailure: " + e.getMessage());
+                }
+            });
+
+
+
+        }
+        return CodeLiveData;
+    }
+
+
     public void analyseNormalText(final String text, final TextView errorTextView, final TextView suggestionTextView) {
         errorTextView.setText("");
         suggestionTextView.setText("");
 
+        final Intent intent = new Intent(context , CodeViewActivity.class);
         result = "";
 
 
         String keyWord = "";
 
-        List<String> lines = convertArrayToList(text.split("\n")) ;
+        final List<String> lines = convertArrayToList(text.split("\n")) ;
+
+
 
         Log.e("camera" , "size = " + lines.size() +"  " + lines.toString()) ;
 
         // الدوران على السطور لتحليل النص داخلهم
-        for (final String line : lines) {
+
+        for(int i =0 ; i < lines.size() ; i++)
+        {
+            final String line =lines.get(i) ;
+            final  int j=i;
             Log.e("camera" , "line = " + line);
                     // فحص الكلمة الاولى لمعرفة نوع البيانات
             if (line.startsWith("if")) {
@@ -97,8 +199,7 @@ public class Analyse {
 
             final String finalKeyWord = keyWord;
             Log.e("camera" , "finalKeyWord = " + finalKeyWord) ;
-
-            FirebaseFirestore.getInstance()
+            firebaseFirestore
                     .collection("regex").whereEqualTo("regex_name", keyWord)
                     .get().addOnSuccessListener(new OnSuccessListener<QuerySnapshot>() {
                 @Override
@@ -106,6 +207,7 @@ public class Analyse {
 
                     List<String> regexList = new ArrayList<>();
                     boolean islineCorrect = false ;
+
 
 
                     for (DocumentSnapshot d : queryDocumentSnapshots) {
@@ -125,31 +227,26 @@ public class Analyse {
                         islineCorrect = checkErrors(regexList , line) ;
 
                         if(!islineCorrect){
-                            getSuggestion(finalKeyWord , suggestionTextView) ;
+                           // result += line + "\n" +  getSuggestion(finalKeyWord) ;
+                            result += line + "\n" ;
+
+                        }else {
+                            result += line + "\n";
                         }
+
                      //  result += " -> " + line + " "+ islineCorrect + "\n";
-                        result += line + "\n";
-                        Intent intent = new Intent(context , CodeViewActivity.class);
-
-                        Bundle bundle = new Bundle();
-
-                        bundle.putString(ARG_CODE , result );
-                        intent.putExtras(bundle) ;
-                        context.startActivity(intent);
+                       // if(j==lines.size()-1){
 
 
+                            Bundle bundle = new Bundle();
 
-                        /*errorTextView.setOptions(Options.Default.get(context)
-                                .withLanguage("java")
-                                .withCode(result)
-                                .withTheme(ColorTheme.MONOKAI));
+                            bundle.putString(ARG_CODE , result );
+                            intent.putExtras(bundle) ;
+                            context.startActivity(intent);
+                      //  }
 
-                         */
 
                     }
-
-
-
 
                 }
             }).addOnFailureListener(new OnFailureListener() {
@@ -159,6 +256,11 @@ public class Analyse {
                 }
             });
         }
+
+
+
+
+
 
     }
 
@@ -187,35 +289,16 @@ public class Analyse {
 
 
 
-
+    String suggestions ;
     //"suggestion"
-    private void getSuggestion(String keyWord, final TextView textView) {
+    private String getSuggestion(List<String> suggestionsList) {
 
-        FirebaseFirestore.getInstance()
-                .collection("regex").whereEqualTo("regex_name", keyWord)
-                .get().addOnSuccessListener(new OnSuccessListener<QuerySnapshot>() {
-            @Override
-            public void onSuccess(QuerySnapshot queryDocumentSnapshots) {
-
-
-                List<String> suggestion = new ArrayList<>();
-
-                for (DocumentSnapshot documentSnapshot : queryDocumentSnapshots) {
-                    if (documentSnapshot.get("suggestion") != null) {
-                        suggestion = (List<String>) documentSnapshot.get("suggestion");
-                    }
+                String text = "/* Suggestion \n ";
+                for (String s : suggestionsList) {
+                    text += s + "\n";
                 }
+                suggestions = text + "\n */";
 
-                String text = "الاقتراحات للمتغير \n";
-                for (String s : suggestion) {
-                    text += s + "\n------------------\n";
-                }
-
-                textView.append(text + "\n");
-
-
-            }
-        });
-
+        return suggestions ;
     }
 }
