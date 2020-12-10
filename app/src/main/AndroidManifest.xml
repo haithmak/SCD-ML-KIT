@@ -25,6 +25,10 @@
             </intent-filter>
         </activity>
 
+        <activity android:name=".CodeViewActivity"
+            android:theme="@style/CodeTheme"
+            android:parentActivityName=".MainActivity"
+            > </activity>
 
 
 

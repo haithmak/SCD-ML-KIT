@@ -1,6 +1,7 @@
 package coding.academy.scd_ml_kit.fragments;
 
 import android.Manifest;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
@@ -36,21 +37,24 @@ import com.google.firebase.ml.vision.text.FirebaseVisionTextRecognizer;
 import java.io.File;
 
 import coding.academy.scd_ml_kit.Analyse;
+import coding.academy.scd_ml_kit.Callbacks;
 import coding.academy.scd_ml_kit.PicUtil;
 import coding.academy.scd_ml_kit.R;
+import io.github.kbiakov.codeview.CodeView;
+import io.github.kbiakov.codeview.adapters.Options;
+import io.github.kbiakov.codeview.highlight.ColorTheme;
 
 import static android.app.Activity.RESULT_OK;
 
 
 public class CameraFragment extends Fragment {
 
+
+
     private static final int requestPermissionID = 101;
-    private static final int PERMISSION_CODE = 1000;
-    private static final int IMAGE_CAPTURE_CODE = 1001;
     static final int REQUEST_TAKE_PHOTO = 1;
     static final int REQUEST_PHOTO_GALLERY = 2;
-    private static final String SAVED_INSTANCE_URI = "uri";
-    private static final String SAVED_INSTANCE_RESULT = "result";
+
     public static final int WRITE_STORAGE = 100;
 
     private Analyse _analyse;
@@ -60,6 +64,20 @@ public class CameraFragment extends Fragment {
     TextView textSuggestion;
     Button mCamera, mGallary;
 
+    private Callbacks mCallbacks;
+
+      @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+        mCallbacks = (Callbacks) context;
+    }
+
+
+    @Override
+    public void onDetach() {
+        super.onDetach();
+        mCallbacks = null;
+    }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -76,17 +94,13 @@ public class CameraFragment extends Fragment {
         imageView = view.findViewById(R.id.imageId);
         mCamera = view.findViewById(R.id.camera);
         mGallary = view.findViewById(R.id.Gallery);
+
+
         //find textview
         textView = view.findViewById(R.id.textId);
         textSuggestion = view.findViewById(R.id.textSuggestion);
-        _analyse = new Analyse(requireContext().getApplicationContext());
+        _analyse = new Analyse(getContext());
 
-        /*check app level permission is granted for Camera
-        if (checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED){
-            //grant the permission
-            requestPermissions(new String[]{Manifest.permission.CAMERA}, 101);
-        }
-         */
 
         checkPermission(REQUEST_TAKE_PHOTO, false);
 
@@ -191,14 +205,6 @@ public class CameraFragment extends Fragment {
 
             if (photoFile != null) {
 
-              /*  imageUri = Uri.fromFile(image);
-
-                Uri photoURI = FileProvider.getUriForFile(this,
-                        "com.example.android.fileprovider",
-                        photoFile);
-
-
-*/
                 Uri photoURI = FileProvider.getUriForFile(requireContext().getApplicationContext(),
                         "coding.academy.scd_ml_kit.fileprovider",
                         photoFile);
@@ -214,10 +220,7 @@ public class CameraFragment extends Fragment {
 
         }
 
-        //open the camera => create an Intent object
 
-        //  intent.setDataAndType(MediaStore.Images.Media.EXTERNAL_CONTENT_URI , "image/*" );
-        //   startActivityForResult(takePictureIntent, REQUEST_TAKE_PHOTO);
     }
 
     public File photoFile;
@@ -239,19 +242,7 @@ public class CameraFragment extends Fragment {
         try {
 
             if (requestCode == REQUEST_TAKE_PHOTO && resultCode == RESULT_OK) {
-              /*
-                Bundle bundle = data.getExtras();
-                //from bundle, extract the image
-                Bitmap bitmap = (Bitmap) bundle.get("data");
 
-                   imageView.setImageBitmap(myBitmap);
-                    imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
-                    FbVisionTextRecognizer(myBitmap);
-
-               */
-
-                // Uri imageUri = (Uri) data.getData();
-                //  Uri imageUri = Uri.fromFile(photoFile);
 
                 Uri imageUri = FileProvider.getUriForFile(requireContext().getApplicationContext(),
                         "coding.academy.scd_ml_kit.fileprovider",
@@ -276,19 +267,6 @@ public class CameraFragment extends Fragment {
                 Uri imageUri = (Uri) data.getData();
                 Log.e("ocr", "launchMediaScanIntent = " + imageUri.getPath());
 
-                 /*
-                String path = PicUtil.getPath(this, imageUri);
-                Bitmap  myBitmap ;
-                if (path == null) {
-                    myBitmap = PicUtil.resizePhoto(photo, this, imageUri, imageView);
-                } else {
-                    myBitmap = PicUtil.resizePhoto(photo, path, imageView);
-                }
-                if (myBitmap != null) {
-                    textView.setText(null);
-                    imageView.setImageBitmap(myBitmap);
-                }
-                */
 
                 Intent mediaScanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
                 mediaScanIntent.setData(imageUri);
@@ -310,7 +288,6 @@ public class CameraFragment extends Fragment {
                     FbVisionTextRecognizer(myBitmap);
                 }
 
-                // Bitmap bitmap2 = decodeBitmapUri( this, imageUri , imageView );
 
 
             }
@@ -340,6 +317,7 @@ public class CameraFragment extends Fragment {
         Task<FirebaseVisionText> task = firebaseVisionTextRecognizer.processImage(firebaseVisionImage);
         //5. if task is success
 
+
         task.addOnSuccessListener(new OnSuccessListener<FirebaseVisionText>() {
             @Override
             public void onSuccess(FirebaseVisionText firebaseVisionText) {
@@ -365,13 +343,13 @@ public class CameraFragment extends Fragment {
     private void processExtractedText(FirebaseVisionText firebaseVisionText) {
         textView.setText(null);
         StringBuilder textToAnalyse = new StringBuilder();
-
+        String lineText ="";
         if (firebaseVisionText.getTextBlocks().size() == 0) {
             textView.setText("No_text");
             return;
         }
 
-        StringBuilder finalText = new StringBuilder();
+
 
         for (FirebaseVisionText.TextBlock block : firebaseVisionText.getTextBlocks()) {
             //  textView.append(block.getText() );
@@ -380,33 +358,17 @@ public class CameraFragment extends Fragment {
             Rect blockFrame = block.getBoundingBox();
 
             for (FirebaseVisionText.Line line : block.getLines()) {
-                String lineText = line.getText();
-
-
-                finalText.append(block.getText());
-
-                Point[] lineCornerPoints = line.getCornerPoints();
-
-                Rect lineFrame = line.getBoundingBox();
-
-                for (FirebaseVisionText.Element element : line.getElements()) {
-                    String elementText = element.getText();
-
-                    textView.append(element.getText() + "\n");
-
-                    Point[] elementCornerPoints = element.getCornerPoints();
-                    Rect elementFrame = element.getBoundingBox();
-
-                }
-
-                textToAnalyse.append(line.getText()).append("\n");
-
+                 lineText += line.getText() + "\n";
             }
 
         }
 
+        textView.setText(lineText);
 
-        _analyse.analyseNormalText(textToAnalyse.toString(), textView, textSuggestion);
+     _analyse.analyseNormalText(lineText, textView, textSuggestion);
+
+
+
 
     }
 

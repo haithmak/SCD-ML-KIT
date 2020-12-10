@@ -36,7 +36,7 @@ public class ManualInputFragment extends Fragment {
         textView = view.findViewById(R.id.textId);
         final TextView textSuggestion = view.findViewById(R.id.textSuggestion);
         final EditText editText = view.findViewById(R.id.textHere);
-        _analyse = new Analyse(requireContext().getApplicationContext());
+        _analyse = new Analyse(getContext());
 
 
         Button button = view.findViewById(R.id.check_button);
@@ -44,7 +44,7 @@ public class ManualInputFragment extends Fragment {
         button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                _analyse.analyseNormalText(editText.getText().toString(), textView, textSuggestion);
+            //    _analyse.analyseNormalText(editText.getText().toString(), code, textSuggestion);
             }
         });
 

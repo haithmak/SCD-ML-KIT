@@ -1,6 +1,8 @@
 package coding.academy.scd_ml_kit;
 
 import android.content.Context;
+import android.content.Intent;
+import android.os.Bundle;
 import android.util.Log;
 import android.widget.TextView;
 
@@ -17,141 +19,59 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import coding.academy.scd_ml_kit.fragments.CameraFragment;
+import io.github.kbiakov.codeview.CodeView;
+import io.github.kbiakov.codeview.adapters.Options;
+import io.github.kbiakov.codeview.highlight.ColorTheme;
+
 public class Analyse {
     private static final String TAG = "Analyse";
 
     private Context context;
 
-    public Analyse(Context context) {
+
+
+    public Analyse(Context context)
+    {
         this.context = context;
     }
-
-    // old
-    private void checkError(String text) {
-
-        StringBuilder wordStringBuilder = new StringBuilder();
-
-        List<String> keyWords = new ArrayList<>();
-        List<String> lines = new ArrayList<>();
-
-        short n = 0;
-
-        for (char c : text.toCharArray()) {
-
-            if (c == ' ' && n == 0) {
-
-                keyWords.add(wordStringBuilder.toString());
-                wordStringBuilder = new StringBuilder();
-
-                n += 1;
-            } else if (c == '\n') {
-                n = 0;
-            } else if (n == 0) {
-                wordStringBuilder.append(c);
-            }
-
-        }
-
-        keyWords.add(wordStringBuilder.toString());
-
-
-        for (char c : text.toCharArray()) {
-
-            if (c == '\n') {
-
-                lines.add(wordStringBuilder.toString());
-                wordStringBuilder = new StringBuilder();
-
-
-            } else {
-                wordStringBuilder.append(c);
-            }
-
-        }
-
-        lines.add(wordStringBuilder.toString());
-
-        //Log.d(TAG, "checkError: " + keyWords);
-
-        for (final String word : keyWords) {
-
-
-            FirebaseFirestore.getInstance()
-                    .collection("regex").whereEqualTo("regex_name", word)
-                    .get().addOnSuccessListener(new OnSuccessListener<QuerySnapshot>() {
-                @Override
-                public void onSuccess(QuerySnapshot queryDocumentSnapshots) {
-                    List<String> regex = new ArrayList<>();
-
-                    for (DocumentSnapshot d : queryDocumentSnapshots) {
-
-                        try {
-                            regex = (List<String>) d.get("regex");
-                        } catch (Exception x) {
-
-                        }
-
-                        //Log.d(TAG, "onSuccess: " + d.get("regex"));
-
-                    }
-
-                    for (String s : regex) {
-                        Log.d(TAG, "onSuccess: " + s);
-                    }
-
-                }
-            }).addOnFailureListener(new OnFailureListener() {
-                @Override
-                public void onFailure(@NonNull Exception e) {
-                    Log.d("Exceptions", "onFailure: " + e.getMessage());
-                }
-            });
-
-
-        }
-
-    }
-
     private String result = "";
 
+
+    public static <T> List<T> convertArrayToList(T array[])
+    {
+
+        // Create an empty List
+        List<T> list = new ArrayList<>();
+
+        // Iterate through the array
+        for (T t : array) {
+            // Add each element into the list
+            list.add(t);
+        }
+
+        // Return the converted List
+        return list;
+    }
+
+    private static final String ARG_CODE = "CODE";
     public void analyseNormalText(final String text, final TextView errorTextView, final TextView suggestionTextView) {
         errorTextView.setText("");
         suggestionTextView.setText("");
 
         result = "";
 
-        StringBuilder wordStringBuilder = new StringBuilder();
-        List<String> lines = new ArrayList<>();
+
         String keyWord = "";
 
-        // لترتيب النص كل سطر في ليست
-        for (char c : text.toCharArray()) {
+        List<String> lines = convertArrayToList(text.split("\n")) ;
 
-            if (c == '\n' || c == ';') {
-
-                if (c == ';') {
-                    wordStringBuilder.append(c);
-                }
-
-                lines.add(wordStringBuilder.toString());
-                wordStringBuilder = new StringBuilder();
-
-
-            } else {
-                wordStringBuilder.append(c);
-            }
-
-        }
-
-        // اضافة اخر سطر
-        if (!wordStringBuilder.toString().isEmpty() || !wordStringBuilder.toString().equals(" "))
-            lines.add(wordStringBuilder.toString());
-
+        Log.e("camera" , "size = " + lines.size() +"  " + lines.toString()) ;
 
         // الدوران على السطور لتحليل النص داخلهم
         for (final String line : lines) {
-
-            // فحص الكلمة الاولى لمعرفة نوع البيانات
+            Log.e("camera" , "line = " + line);
+                    // فحص الكلمة الاولى لمعرفة نوع البيانات
             if (line.startsWith("if")) {
                 keyWord = "if";
             } else if (line.startsWith("for")) {
@@ -171,9 +91,12 @@ public class Analyse {
             } else if (line.startsWith("private void") || line.startsWith("public void") || line.startsWith("public static void") || line.startsWith("private static void") || line.startsWith("void")) {
                 keyWord = "function";
             }
-
+            else {
+                keyWord = "" ;
+            }
 
             final String finalKeyWord = keyWord;
+            Log.e("camera" , "finalKeyWord = " + finalKeyWord) ;
 
             FirebaseFirestore.getInstance()
                     .collection("regex").whereEqualTo("regex_name", keyWord)
@@ -181,49 +104,51 @@ public class Analyse {
                 @Override
                 public void onSuccess(QuerySnapshot queryDocumentSnapshots) {
 
-                    List<String> regex = new ArrayList<>();
+                    List<String> regexList = new ArrayList<>();
+                    boolean islineCorrect = false ;
+
 
                     for (DocumentSnapshot d : queryDocumentSnapshots) {
 
                         try {
-                            regex = (List<String>) d.get("regex");
+                            regexList = (List<String>) d.get("regex");
+
                         } catch (Exception x) {
                             Log.d(TAG, "Exception : " + x.getMessage());
                         }
                         Log.d(TAG, "النوع : " + d.getString("regex_name") + " | " + d.getString("item_name"));
-                        //result += "النوع : " + d.getString("regex_name") + " | " + d.getString("item_name") + "\n";
 
                     }
 
-                    boolean correct = false;
+                    if (regexList != null || !regexList.isEmpty()  ) {
 
-                    if (regex != null) {
+                        islineCorrect = checkErrors(regexList , line) ;
 
-                        Log.d(TAG, "النص : " + line);
-
-                        for (String s : regex) {
-                            Log.d(TAG, "الريجكس: " + s);
-                            //result += "\nالريجكس: -> " + s + "";
-
-                            if (checkErrors(s, line)) {
-                                correct = true;
-                            }
-
+                        if(!islineCorrect){
+                            getSuggestion(finalKeyWord , suggestionTextView) ;
                         }
+                     //  result += " -> " + line + " "+ islineCorrect + "\n";
+                        result += line + "\n";
+                        Intent intent = new Intent(context , CodeViewActivity.class);
 
-                        if (correct) {
-                            Log.d(TAG, "النتيجة : صح");
-                            //result += line + "\n | النتيجة : صح" + "\n" + "-----------------------------------------------\n";
+                        Bundle bundle = new Bundle();
 
-                        } else if (!line.isEmpty() && !line.equals(" ")) {
-                            Log.d(TAG, "النتيجة : خطا");
-                            result += " -> " + line + "\n | النتيجة : خطأ" + "\n" + "------------\n";
-                            getSuggestion(finalKeyWord, suggestionTextView);
-                        }
+                        bundle.putString(ARG_CODE , result );
+                        intent.putExtras(bundle) ;
+                        context.startActivity(intent);
 
-                        errorTextView.setText(result);
+
+
+                        /*errorTextView.setOptions(Options.Default.get(context)
+                                .withLanguage("java")
+                                .withCode(result)
+                                .withTheme(ColorTheme.MONOKAI));
+
+                         */
 
                     }
+
+
 
 
                 }
@@ -237,20 +162,31 @@ public class Analyse {
 
     }
 
+    private boolean checkErrors(List<String> regexList , String text) {
 
-    private boolean checkErrors(String regex, String text) {
-
+        boolean crroect = false ;
         try {
 
-            Pattern pt = Pattern.compile(regex);
-            Matcher mt = pt.matcher(text);
-
-            return mt.matches();
+            for (String regex : regexList) {
+                Pattern pt = Pattern.compile(regex);
+                Matcher mt = pt.matcher(text);
+                if(mt.matches()){
+                    crroect =true ;
+                    break;
+                }
+            }
         } catch (Exception x) {
             Log.d(TAG, "خطأ عند معالجة الريجكس: " + x.getMessage());
-            return false;
         }
+
+
+        return crroect;
     }
+
+
+
+
+
 
     //"suggestion"
     private void getSuggestion(String keyWord, final TextView textView) {

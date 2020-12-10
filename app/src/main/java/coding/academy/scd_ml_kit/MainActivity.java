@@ -1,52 +1,25 @@
 package coding.academy.scd_ml_kit;
 
-import android.Manifest;
-import android.content.Intent;
-import android.content.pm.PackageManager;
-import android.graphics.Bitmap;
-import android.graphics.Point;
-import android.graphics.Rect;
-import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
-import android.provider.MediaStore;
-import android.util.Log;
-import android.view.View;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.FileProvider;
 import androidx.viewpager2.widget.ViewPager2;
 
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.android.gms.tasks.Task;
 import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.tabs.TabLayoutMediator;
-import com.google.firebase.ml.vision.FirebaseVision;
-import com.google.firebase.ml.vision.common.FirebaseVisionImage;
-import com.google.firebase.ml.vision.text.FirebaseVisionText;
-import com.google.firebase.ml.vision.text.FirebaseVisionTextRecognizer;
 
-import java.io.File;
-
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements Callbacks {
 
     private static final String TAG = "MainActivity";
 
     private Analyse _analyse;
-
     ImageView imageView;
     TextView textView;
     Button mCamera, mGallary;
-
 
     private static final int requestPermissionID = 101;
     private static final int PERMISSION_CODE = 1000;
@@ -61,6 +34,8 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+
 
 
         ViewPager2 viewPager2 = findViewById(R.id.pager);
@@ -96,19 +71,19 @@ public class MainActivity extends AppCompatActivity {
         tabLayoutMediator.attach();
 
 
-        imageView = findViewById(R.id.imageId);
+     /*   imageView = findViewById(R.id.imageId);
         mCamera = findViewById(R.id.camera);
         mGallary = findViewById(R.id.Gallery);
         //find textview
         textView = findViewById(R.id.textId);
         _analyse = new Analyse(this);
 
-        /*check app level permission is granted for Camera
+        check app level permission is granted for Camera
         if (checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED){
             //grant the permission
             requestPermissions(new String[]{Manifest.permission.CAMERA}, 101);
         }
-         */
+
 
         //checkPermission(REQUEST_TAKE_PHOTO, false);
 
@@ -128,11 +103,18 @@ public class MainActivity extends AppCompatActivity {
                 checkPermission(REQUEST_TAKE_PHOTO, true);
             }
         });
+*/
+
+    }
+
+    @Override
+    public void onCodeShow(String code) {
+
 
 
     }
 
-
+/*
     //Check whether the user has granted the WRITE_STORAGE permission//
 
     public void checkPermission(int requestCode, boolean open) {
@@ -175,6 +157,8 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+ */
+/*
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         if (requestCode != requestPermissionID) {
@@ -223,7 +207,7 @@ public class MainActivity extends AppCompatActivity {
                         photoFile);
 
 
-*/
+
                 Uri photoURI = FileProvider.getUriForFile(this,
                         "coding.academy.scd_ml_kit.fileprovider",
                         photoFile);
@@ -264,19 +248,6 @@ public class MainActivity extends AppCompatActivity {
         try {
 
             if (requestCode == REQUEST_TAKE_PHOTO && resultCode == RESULT_OK) {
-              /*
-                Bundle bundle = data.getExtras();
-                //from bundle, extract the image
-                Bitmap bitmap = (Bitmap) bundle.get("data");
-
-                   imageView.setImageBitmap(myBitmap);
-                    imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
-                    FbVisionTextRecognizer(myBitmap);
-
-               */
-
-                // Uri imageUri = (Uri) data.getData();
-                //  Uri imageUri = Uri.fromFile(photoFile);
 
                 Uri imageUri = FileProvider.getUriForFile(this,
                         "coding.academy.scd_ml_kit.fileprovider",
@@ -301,19 +272,6 @@ public class MainActivity extends AppCompatActivity {
                 Uri imageUri = (Uri) data.getData();
                 Log.e("ocr", "launchMediaScanIntent = " + imageUri.getPath());
 
-                 /*
-                String path = PicUtil.getPath(this, imageUri);
-                Bitmap  myBitmap ;
-                if (path == null) {
-                    myBitmap = PicUtil.resizePhoto(photo, this, imageUri, imageView);
-                } else {
-                    myBitmap = PicUtil.resizePhoto(photo, path, imageView);
-                }
-                if (myBitmap != null) {
-                    textView.setText(null);
-                    imageView.setImageBitmap(myBitmap);
-                }
-                */
 
                 Intent mediaScanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
                 mediaScanIntent.setData(imageUri);
@@ -328,14 +286,13 @@ public class MainActivity extends AppCompatActivity {
                     myBitmap = PicUtil.resizePhoto(photoFile, path, imageView);
                 }
                 if (myBitmap != null) {
-                    // textView.setText(null);
-                    //imageView.setImageBitmap(myBitmap);
+
                     imageView.setImageBitmap(myBitmap);
                     imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
                     FbVisionTextRecognizer(myBitmap);
                 }
 
-                // Bitmap bitmap2 = decodeBitmapUri( this, imageUri , imageView );
+
 
 
             }
@@ -434,7 +391,7 @@ public class MainActivity extends AppCompatActivity {
         //_analyse.analyseNormalText(textToAnalyse.toString(), textView);
 
 
-    }
+    }*/
 
 
 
